@@ -1,15 +1,47 @@
-import React from 'react';
+import _ from 'lodash';
+import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-import { Provider } from 'react-redux';
-import { createStore, applyMiddleware } from 'redux';
+import YTSearch from 'youtube-api-search'
+import SearchBar from './components/search_bar';
+import VideoList from './components/video_list';
+import VideoDetail from './components/video_detail';
 
-import App from './components/app';
-import reducers from './reducers';
+const API_KEY = 'AIzaSyAbvgEHVf8MeWzZjbMrRCW8pTwigUJwjMM';
 
-const createStoreWithMiddleware = applyMiddleware()(createStore);
+//Create new component. This JS must produce some html
+class App extends Component { //es6 syntax of declaring = function() {
+    constructor(props) {
+        super(props);
 
-ReactDOM.render(
-  <Provider store={createStoreWithMiddleware(reducers)}>
-    <App />
-  </Provider>
-  , document.querySelector('.container'));
+        this.state = { 
+            videos: [],
+            selectedVideo: null
+        };
+    }
+
+    videoSearch(term) {
+//pass in object 'key' with API_KEY and the term 'surfboards', then we pass a second argument with the function holding the response data 'console.log(data)'. i.e. we pass in configuration options and get a callback.
+YTSearch({ key: API_KEY, term: term}, (videos) => {
+    this.setState({
+         videos: videos,
+    selectedVideo: videos[0] 
+}); 
+});
+    }
+    render() {
+        const videoSearch = _.debounce((term) => {this.videoSearch(term) }, 400);
+
+        return (
+            <div>
+                <SearchBar onSearchTermChange={videoSearch} />
+                <VideoDetail video={this.state.selectedVideo} />
+                <VideoList
+                onVideoSelect={selectedVideo => this.setState({selectedVideo}) }
+                videos={this.state.videos}/>
+            </div>
+        ); //this js gets turned into html 
+    }
+}
+
+// Take this component's generated html and put it in the DOM (show on the page)
+ReactDOM.render(<App />, document.querySelector('.container')); //instantiate App using <App />
